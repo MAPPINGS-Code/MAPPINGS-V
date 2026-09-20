@@ -46,14 +46,12 @@ extensions = [
 import os
 import sys
 # sys.path.insert(0, os.path.abspath('../../../'))
-sys.path.insert(0, os.path.abspath('../../../py_progs/'))
-sys.path.insert(0, os.path.abspath('../../../py_progs/py4py'))
 
 # == Options for the varous plugins =======================================
 # -- Whether or not to include ToDo notes ---------------------------------
 todo_include_todos = True
 # -- GitHub repo for issues -----------------------------------------------
-issues_github_path = "agnwinds/python"
+issues_github_path = "MAPPINGS-Code/MAPPINGS-V"
 # -- Suppress warnings about autosectionlabel duplicates ------------------
 suppress_warnings = [
     'autosectionlabel.*',
@@ -121,21 +119,6 @@ html_theme_options = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 # html_static_path = ['_static']
-
-# Custom sidebar templates, must be a dictionary that maps document names
-# to template names.
-#
-# This is required for the alabaster theme
-# refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
-html_sidebars = {
-    '**': [
-        'about.html',
-        'navigation.html',
-        'relations.html',  # needs 'show_related': True theme option to display
-        'searchbox.html',
-        'donate.html',
-    ]
-}
 
 # -- Options for HTMLHelp output ------------------------------------------
 
