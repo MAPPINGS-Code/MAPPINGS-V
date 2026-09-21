@@ -8,15 +8,7 @@
 		Brent Groves, David Nicholls,
 		Adam D. Thomas, Yi-Fei Jin, Knox Long
 
-`This is the GitHub mirror to the public MAPPINGS source.`
 
-See also the public git mirror on:
-
-`https://bitbucket.org/RalphSutherland/mappings`
-
-and the public simple ZIP file downloads on :
-
-`https://mappings.anu.edu.au`
 
 #### References:
 
@@ -28,9 +20,13 @@ When using this code please cite the following papers:
 #### Contact:
 
 	* Ralph Sutherland: Ralph.Sutherland@anu.edu.au          
-    * Yifei Jin:        yfjsci@gmail.com
+        * Yifei Jin:        yfjsci@gmail.com
 	* Knox Long:        long@stsci.edu
 
+
+## Documentation
+
+The full set of documentation for Mappings can ge found on ReadtheDocs at https://mappings-v.readthedocs.io/en/latest/index.html
 
 ## Quick Start Compiling Install and Run:
 

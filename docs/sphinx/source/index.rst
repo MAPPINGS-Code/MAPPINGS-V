@@ -15,7 +15,6 @@ Astrophysical equilibrium and time-dependent photoinisation and steady supersoni
 *MAPPINGS* was originally written by Dopita in 1976 and descrbed in a PhD thesis in 1982 by Binette (ANU) and then by PhD thesis by Sutherland in 1993 (ANU) and a cooling paper in 1993, and Sutherland has curated
 the code since 1989.  The code has evolved since then and useful early references is are `Sutherland and Dopita 1993` and `Dopita and Sutherland (1996) <https://ui.adsabs.harvard.edu/abs/1996ApJS..102..161D/abstract>`_
 
-* [Add papers here.]
 
 *MAPPINGS*
 This code calculates ionisation and emission for continuum and line fluxes of recombination and collisionally excited lines
@@ -34,13 +33,6 @@ See :doc:`installation` to build MAPPINGS and run your first model, then
 example of the two main model types.
 
 -------------
-Locations
--------------
-
-The code is is available on `Bitbucket  <https://bitbucket.org/RalphSutherland/mappings>`_
-and a mirror on a university server for `mappings  <https://mappings.anu.edu.au>`_  Note: the public branch of the Bitbucket server is encourage and will always be the most recently updated although the univeristy snapshot is taken regularly and lets users without git to get a working copy of the current version as a zip file download with just the full public branch included but not the experimental or development branches.
-
--------------
 Issues
 -------------
 
@@ -50,7 +42,7 @@ Issues regarding the code and suggestions for improvement the code regarding the
 References
 -------------
 
-If you make use of *MAPPINGS* in your published research we ask that you reference the following papers
+If you make use of *MAPPINGS* in your published research we ask that you reference the following papers:
 
 Add a more limited set of Sutherland and Dopita 1993` and `Dopita and Sutherland (1995) <https://ui.adsabs.harvard.edu/abs/1996ApJS..102..161D/abstract>`_
 <https://ui.adsabs.harvard.edu/abs/1996ApJS..102..161D/abstract>`_
@@ -69,11 +61,20 @@ Authors
 The authors of the *MAPPINGS* code and their institutions are:
 
 
-Ralph S Sutherland
+Ralph S. Sutherland
+
+Michael A .Dopita
   Research School of Astronomy & Astrophysics
   Australian National University
 
-Add others
+More recent updates have been makde by:
+
+Yifei Jin
+    Westlake University
+
+Knox S.Long
+    Space Telescope Science Institute
+
 
 
 ----------------------------------------
