@@ -138,17 +138,24 @@ following before trusting a shock result:
 
        grep "Result:" run.log | tail -1
 
-   It should say ``Result: CONVERGED``. This line is reliable for a
+   It should say ``Result: CONVERGED``, along with the actual
+   precursor/post-shock RMS percentages. This line is reliable for a
    model whose main loop genuinely converges — the mandatory final
    independent re-solve no longer overrides an already-established
    result with a spurious disagreement (see :doc:`code_s5`, "How the
-   precursor↔shock loop actually converges"). If it says
-   ``NOT CONVERGED``, the model genuinely did not settle within the
-   iteration budget, and the physical state MAPPINGS wrote out should
-   be treated as unreliable rather than as a slow-but-valid answer. A
-   result of ``NO SHOCK`` means no compressive shock solution exists
-   for these parameters at all (sub-Alfvénic preshock flow) — this is
-   not a failure, just a model with no shock to compute.
+   precursor↔shock loop actually converges"). If the main loop never
+   converges, the line instead classifies *why* — see :doc:`code_s5`,
+   :ref:`s5_convergence_outcomes`, for the full set of eight possible
+   outcomes. Not all of them mean the same thing: ``NOT CONVERGED
+   (precursor oscillating)`` is a characterised, bounded limit cycle
+   validated (via a direct predicted-spectrum comparison) to leave the
+   physical output unaffected, and is safe to use as-is; the other
+   ``NOT CONVERGED``/``FAILED`` variants are uncharacterised and the
+   physical state MAPPINGS wrote out should be treated with more
+   suspicion. A result of ``NO SHOCK`` means no compressive shock
+   solution exists for these parameters at all (sub-Alfvénic preshock
+   flow) — this is not a failure, just a model with no shock to
+   compute.
 
 3. **Look at how many iterations it actually took**
    (``grep "Convergence Test" run.log``). A run that converges
@@ -163,7 +170,10 @@ following before trusting a shock result:
    smoothly, monotonically shrinking RMS is a genuinely converging
    model that just needs more headroom; an RMS that plateaus or bounces
    between values without shrinking further is a real oscillation that
-   more iterations will not fix.
+   more iterations will not fix — but see :doc:`code_s5`,
+   :ref:`s5_convergence_outcomes`: a bounded oscillation on the
+   precursor side alone is now identified and reported as such, and
+   does not need a rerun.
 
 4. **Confirm you're reading the actual final output file.** When
    MAPPINGS extends the iteration count beyond what you requested, it

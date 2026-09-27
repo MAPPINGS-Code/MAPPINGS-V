@@ -118,9 +118,9 @@ the model cleanly:
 The ``No Shock:`` line is written in the same comma-separated style as
 ``Model ended:`` (see :doc:`outputs`) so it can be parsed the same way,
 and the ``Result:`` line means ``grep "Result:"`` behaves consistently
-across every outcome — ``CONVERGED``, ``NOT CONVERGED``, and
-``NO SHOCK``.  No ``.sh5``/``.csv`` structure files are produced for a
-no-shock model, since no shock structure exists to write.
+across every outcome — see :ref:`s5_convergence_outcomes` for the full
+set, eight in total.  No ``.sh5``/``.csv`` structure files are produced
+for a no-shock model, since no shock structure exists to write.
 
 -------------------------------------------------
 Phase 2a — Cooling zone integration (``compsh5``)
@@ -361,7 +361,37 @@ than letting one noisy independent re-solve flip the final line to
 ``NOT CONVERGED``.  The raw numbers from that last check are still
 printed either way — only the bottom-line ``Result:`` is corrected. A
 model whose main loop never actually converges is not affected by
-this and still correctly reports ``NOT CONVERGED``.
+this and still correctly reports one of the outcomes described in
+:ref:`s5_convergence_outcomes`.
+
+**Persistent precursor oscillation.**  For a small minority of models
+— empirically always precursor-dominated, and typically low-to-mid
+shock velocity — the precursor↔shock coupling settles into a genuine,
+verified period-2 limit cycle rather than converging: the precursor's
+boundary state (Ψ, T\ :sub:`pre`, n\ :sub:`e,pre`) alternates between
+two nearby values indefinitely instead of approaching a single fixed
+point. This is a real eigenvalue-crossing instability in the discrete
+precursor↔shock map itself, not an artifact of the Aitken relaxation
+scheme — bypassing Aitken entirely (raw fixed-point substitution)
+shows the same period-2 cycle, just larger in amplitude. It traces to
+a mesh↔ionisation feedback loop concentrated in the precursor's
+He-ionisation-transition zones: the per-zone mesh width array
+(``predr``) persists across outer iterations (a ``COMMON`` array, not
+reset each pass), so each iteration's mesh adapts to the *previous*
+iteration's ionisation state, closing a feedback loop with no inertia.
+
+A direct comparison of the two alternating states' predicted precursor
+emission-line spectra (using the line-summary tooling in
+``py_progs/mappings``) shows the oscillation doesn't matter for the
+actual output: every diagnostic line agreed to well under 0.5% between
+the two states, consistently smaller than the genuine spectral
+difference between adjacent, cleanly-converged grid points one
+velocity step apart.
+
+Given that, MAPPINGS does not attempt to force this class of model to
+converge. Instead ``shock5check`` classifies *why* the combined test
+failed, and a distinct, honest ``Result:`` line is reported — see
+:ref:`s5_convergence_outcomes` below.
 
 .. note::
 
@@ -409,16 +439,87 @@ the flag ``converged`` is set, which exits the iteration loop.
 Otherwise another iteration begins, up to ``mxshockits`` (20) global
 iterations.
 
-Two further diagnostics are printed alongside the six raw quantities:
+Two further diagnostics are computed alongside the six raw quantities:
 a split of the same six terms into a **precursor** (pre-shock: Ψ,
-T\ :sub:`pre`, n\ :sub:`e,pre`, ΔH/He) sub-RMS and a **post-shock**
-(compression, T\ :sub:`shock`) sub-RMS, showing which side of the
-shock front a lingering residual actually comes from (in practice,
-almost always the precursor); and the Aitken relaxation weight ``ω``
-used that iteration (see :ref:`s5_convergence` above).  A separate
-warning fires if the precursor's own inner zone-stepping loop
-exhausts its sweep budget without reaching its own target — distinct
-from, and diagnosed independently of, the outer convergence check.
+T\ :sub:`pre`, n\ :sub:`e,pre`, ΔH/He) sub-RMS (``precrms``) and a
+**post-shock** (compression, T\ :sub:`shock`) sub-RMS (``postrms``),
+showing which side of the shock front a lingering residual actually
+comes from (in practice, almost always the precursor); and the Aitken
+relaxation weight ``ω`` used that iteration (see :ref:`s5_convergence`
+above). A separate check tracks whether the precursor's own inner
+zone-stepping loop exhausts its sweep budget without reaching its own
+self-consistency target — a different, nested convergence test from
+the outer coupling, which (see below) takes priority over it: if the
+inner solve itself never settled, the outer ``precrms``/``postrms``
+split isn't a meaningful reading regardless of what it shows.
+
+.. _s5_convergence_outcomes:
+
+Outcome classification
+=================================================
+
+When the main loop finishes — either because it converged, or because
+it exhausted ``mxshockits`` — MAPPINGS reports one of eight mutually
+exclusive, jointly exhaustive outcomes on the bottom-line ``Result:``
+line. Every outcome also carries the actual precursor/post-shock RMS
+percentages, so the classification is self-verifiable without digging
+through the log.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - ``Result:`` line
+     - Meaning
+   * - ``NO SHOCK (sub-Alfvenic)``
+     - No compressive shock solution exists — see :ref:`s5_no_shock`.
+   * - ``CONVERGED``
+     - Ordinary clean convergence.
+   * - ``CONVERGED (last independent recheck was noisy; already
+       converged earlier)``
+     - Converged, but the mandatory final independent re-solve showed
+       a small residual on its own — Aitken's noise floor, not a real
+       disagreement (see :ref:`s5_convergence` above).
+   * - ``NOT CONVERGED (precursor oscillating)``
+     - The characterised, bounded period-2 limit cycle described in
+       :ref:`s5_convergence` — ``postrms`` is tight, ``precrms`` is
+       within the spectrum-validated 0.5% ceiling, and the precursor's
+       inner solve settled normally. Safe to use as-is; not an
+       ordinary convergence, but not a problem either.
+   * - ``NOT CONVERGED (precursor not converged)``
+     - Post-shock side and inner solve are fine, but ``precrms``
+       exceeds the validated ceiling — an uncharacterised precursor
+       problem.
+   * - ``NOT CONVERGED (post-shock not converged, precursor OK)``
+     - The precursor coupling is fine, but the post-shock side itself
+       has not converged — never yet observed in practice, but now
+       distinguishable from a precursor problem rather than folded
+       into the same bucket.
+   * - ``NOT CONVERGED (precursor and post-shock not converged)``
+     - Neither side converged.
+   * - ``FAILED (precursor inner solve exhausted, unreliable)``
+     - The precursor's own inner zone-stepping loop hit its sweep
+       budget without reaching self-consistency. Takes priority over
+       the five outcomes above, since the outer split isn't a
+       meaningful reading if the inner solve itself never settled.
+
+For example, a model in the characterised oscillating regime reports:
+
+.. code-block:: text
+
+    Result: NOT CONVERGED (precursor oscillating; precursor RMS  3.2138E-02%, post-shock RMS  1.3283E-02%)
+    Bounded precursor limit cycle -- post-shock and inner solve OK.
+
+The post-shock ceiling used above (0.05%) is deliberately looser than
+the tight ``s5rmstol`` (0.01%) used for the combined test: post-shock
+quantities are computed from the precursor's own boundary state, so a
+purely precursor-side oscillation shows up as a small correlated
+wobble on the post-shock side too, and gating on the tight threshold
+directly misclassified known precursor-only cases as post-shock
+problems during validation. 0.05% is a provisional margin above the
+0.005%–0.022% actually observed across the known oscillating models,
+not an independently validated bound the way the 0.5% precursor
+ceiling is.
 
 When the loop exits, a few more ordinary iterations run (see
 :ref:`s5_convergence`), then one final pass runs with ``finalit=1``
