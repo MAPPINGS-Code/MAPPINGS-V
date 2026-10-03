@@ -44,6 +44,7 @@ c
       integer*4 i,ion,j,k,line,luin,atom,ionindex
       integer*4 luop,series,trans,m,nz
       integer*4 checksum,foundidx
+      integer*4 turbunused
 c
       character ibell*4,ilgg*4, ibuf(19)*4
       character env_var*512
@@ -385,8 +386,6 @@ c
       hhecollmode=0
       linecoolmode=0
       alphacoolmode=0
-      turbheatmode=0
-      admach=0.0d0
       radpressmode=0
 cc
       filename=datadir(1:dtlen)//'/data/switches.txt'
@@ -488,11 +487,14 @@ c
 c
         read (luin,20) (ibuf(j),j=1,19)
         write (*,20) (ibuf(j),j=1,19)
-        read (luin,*) turbheatmode
-        if (turbheatmode.le.0) turbheatmode=0
-        if (turbheatmode.gt.1) turbheatmode=0
-        admach=0.0d0
-        write (*,*) '*** turbheatmode :',turbheatmode,admach
+c
+c  Former microturbulent-heating switch, removed as vestigial (issue
+c  #11).  switches.txt is read by position, so the slot is still read
+c  and discarded to keep existing files aligned.
+c
+        read (luin,*) turbunused
+        if (turbunused.ne.0) write (*,*)
+     &    '*** turbulent heating switch is no longer supported; ignored'
 c
         read (luin,20) (ibuf(j),j=1,19)
         write (*,20) (ibuf(j),j=1,19)

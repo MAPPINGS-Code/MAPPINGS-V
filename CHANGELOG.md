@@ -65,3 +65,9 @@ Documented in `code_s5.rst`, `outputs.rst`, and `walkthrough_s5.rst`; the full i
 
 - **Shock Test 5 (800 km/s) had a wrong reference value since the original import.** Its expected Hβ flux was written with the wrong exponent (10× too small), so the test reported a ~900% Hβ discrepancy — and the same for total line luminosity, which is computed from Hβ — on every run, making a real regression in that test impossible to spot. The model output itself was always right; the reference values are now corrected and both lines agree to 0.1%.
 - **Removed leftover precursor-tolerance code in `shock5.f`** that still set the old 5–10% inner-loop tolerance before immediately overriding it with the real 0.01% tolerance (`s5rmstol`). It had no effect on results, but it made the code read as though the precursor still iterated to 5% (reported in issue #16). The always-on flag that did the overriding (`s5tight`) was removed with it. Shock test-suite output is identical before and after.
+
+## Vestigial microturbulent heating removed (October 2026, issue #11)
+
+The `turbheatmode` expert switch in `switches.txt` never did anything: the heating term in `cool.f` had long been commented out, the switch was reset to 0 before every P6/P7 model, and there was no way to set the turbulent Mach number it depended on. It was an old experiment that was disabled but never removed; confirmed vestigial and slated for removal by the code's original author. The commented-out calculation, the switch, its status message and the unused common-block variables (`turbheatmode`, `admach`, `alphaturbfixed`) are now gone. Model output is unchanged.
+
+Because `switches.txt` is read line by line by position, its former turbulent-heating line is kept (relabeled as unused) so existing copies of the file still line up; a nonzero value there now just prints a note that the switch is no longer supported.

@@ -155,7 +155,7 @@ it actually belongs on for that zone (see Overview).
 Dormant heating/cooling channels
 -------------------------------------------------
 
-Three fully-implemented channels are never invoked anywhere in the
+Two fully-implemented channels are never invoked anywhere in the
 current source (verified by an exhaustive grep for their call sites).
 As with the Bowen-fluorescence and precursor-line-monitor gaps
 documented elsewhere (:doc:`physics_lines`, :doc:`physics_output_spectra`),
@@ -183,34 +183,10 @@ with no gating flag or input mode to check first. It reads as code
 that was disconnected from the call graph at some point, rather than
 a feature deliberately left unfinished.
 
-Microturbulent dissipation heating
-=====================================
-
-This one is more than just inert code — the controlling flag actively
-misleads. ``turbheatmode`` is a real, user-settable expert-mode input
-(read in ``mapinit.f``, clamped to 0 or 1), and ``photo6.f``/``photo7.f``
-do check it — but only to print a status line:
-
-.. code-block:: none
-
-   Micro-Turbulent Dissipation Enabled, Mach = <admach>
-
-The *only* place ``turbheatmode`` drives an actual calculation is a
-commented-out block in ``cool.f``, which would compute a dissipation
-heating rate ``q = 0.5 * rho * v^2 * alpha_cool`` from one of four
-turbulent-dissipation-timescale prescriptions (recombination time,
-collisional-ionisation-equilibrium time, cooling time, or a fixed rate
-``alphaturbfixed``, selected by ``turbheatmode`` = 1–4). So a user can
-enable this at setup, see a confirmation that it is "Enabled", and get
-**no physical effect whatsoever** — the heating term itself is dead.
-Modes 2–4 are additionally unreachable even if the block were
-uncommented, since ``mapinit.f`` clamps any input value above 1 back
-to 0.
-
 ``timtqui`` — a distinct regime, not a redundant copy of ``teequi2``
 ========================================================================
 
-Unlike the two channels above, ``timtqui.f`` is not simply disconnected
+Unlike Compton above, ``timtqui.f`` is not simply disconnected
 code — it targets a genuinely different physical question from the
 two active temperature solvers. All three use the same
 arctanh(dlos)=B+A·ln(T) iterative scheme, but differ in what ionisation

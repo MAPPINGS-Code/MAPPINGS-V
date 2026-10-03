@@ -831,9 +831,7 @@ c
 c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
-  600 admach=0.0d0
-      turbheatmode=0
-      frlum=0.0d0
+  600 frlum=0.0d0
       tm00=0.0d0
 c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -3616,11 +3614,6 @@ c
      & t6,'Zstar',t16,'FQHI',t27,'FQHEI',t38,'FQHEII',/,
      & t6,0pf8.4,1x,3(1pg10.3,x),/)
       write (luop,290) iso,teff,alnth,turn,cut,zstar,qhi,qhei,qheii
-c
-      if (turbheatmode.eq.1) then
-  300 format(/,' Micro-Turbulent Dissipation Enabled, Mach = ',1pg10.3)
-        write (*,300) admach
-      endif
 c
       if (grainmode.eq.1) then
         write (luop,330) galpha,amin(1),amax(1),amin(2),amax(2),
