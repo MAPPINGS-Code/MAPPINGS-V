@@ -34,6 +34,12 @@ c
       real*8 band1,band2,band3,band4,band5,band6,bandall,widnu
       real*8 meanion(mxelem),zi(mxelem)
       real*8 machnumber,alfvennumber
+c precrms/postrms (issue #14): the precursor-side and post-shock-side
+c sub-residuals from the outer convergence test, computed every call
+c to shock5check.  Shared so shock5() can capture the main loop's
+c last real values (before the final independent re-solve overwrites
+c them) to print alongside the bottom-line Result classification.
+      real*8 precrms,postrms
       real*8 prefield(mxinfph)
 c       real*8 absf
 c       parameter(absf=0.02d0)
@@ -83,7 +89,7 @@ c
      & atimefrac,cltimefrac,abtimefrac,
      & timend,teq,dheq,tl0,tl1,tt1,
      & band1,band2,band3,band4,band5,band6,bandall,widnu,
-     & prefield
+     & prefield,precrms,postrms
 c
 c      real*8 feii_flux,feii_bri,feii_ratio,feii_bratio
 c
@@ -109,15 +115,34 @@ c
       integer*4 ie,jnorm,converged,useprecfile
       integer*4  count,step,np,finalit
       integer*4  aitninit
-c s5tight: precursor inner-loop tolerance/regrid control (issue #7),
-c set once convergence is first declared and held through the lock-in
-c iterations and the final pass.  Deliberately separate from finalit,
-c which controls compsh5's file writes and must stay true for exactly
-c one call.
-      integer*4  s5tight
+c osclass (issue #14): set by shock5check whenever the model fails
+c the ordinary combined convergence test, classifying *why* using the
+c same three facts every time -- precwarn, postrms, precrms.  Read by
+c shock5() after the main loop to report a distinct Result line
+c instead of a plain NOT CONVERGED.  Values:
+c   0 = not applicable (converged, or not yet classified)
+c   1 = precursor oscillating: postrms tight, precrms within the
+c       validated 0.5% ceiling, inner solve settled -- the
+c       characterised, scientifically-immaterial limit cycle.
+c   2 = precursor not converged: postrms tight, but precrms exceeds
+c       the ceiling -- an uncharacterised precursor problem.
+c   3 = post-shock not converged: precrms fine, postrms not tight --
+c       the shock side itself, isolated from anything precursor-side.
+c   4 = both precursor and post-shock not converged.
+c   5 = precursor inner solve exhausted (precwarn) -- takes priority
+c       over 1-4, since a failed inner solve means precrms/postrms
+c       aren't meaningful readings regardless of what they show.
+      integer*4  osclass
+c precwarn (issue #14): set by shock5precursor when its own inner
+c zone-stepping sweep exhausts its budget (mxpcits) without reaching
+c its self-consistency target -- a different, nested convergence test
+c from the outer precrms/postrms split, previously only a printed
+c warning.  Checked by shock5check to set osclass=5.
+      integer*4  precwarn
 c
       common /shock5I/ ie,jnorm,converged,
-     & count,step,np,finalit,useprecfile,aitninit,s5tight
+     & count,step,np,finalit,useprecfile,aitninit,
+     & osclass,precwarn
 c
       common /shock5L/ luop,lusp,lupt,lupc,
      & ludy,lucl,lupb,lupf,

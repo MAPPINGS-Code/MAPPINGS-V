@@ -453,7 +453,7 @@ between the current and previous iterations, plus three further diagnostics:
        RMS      :  0.008%
        Aitken omega (precursor relaxation)     :  0.732
     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-     Result: CONVERGED
+     Result: CONVERGED  (precursor RMS  1.0000E-02%, post-shock RMS  3.0000E-03%)
    ********************************************************
 
 The six quantities are the ionisation parameter Ψ (= Q/v), the compression factor, the
@@ -463,26 +463,40 @@ differences; convergence is declared when it is below 0.01% (10\ :sup:`−4`).  
 **Precursor RMS** and **Post-shock RMS** lines split that same sum into the four
 precursor (pre-shock) terms and the two post-shock terms, so a lingering residual can be
 attributed to one side of the shock front or the other — in practice this is almost
-always the precursor.  **Aitken omega** is the self-tuning relaxation weight blended
-into the precursor state that iteration (see :doc:`code_s5`, "How the precursor↔shock
-loop actually converges"); it is not fixed, and for a model that is oscillating rather
-than converging it is often informative to watch whether omega itself settles down or
-keeps cycling.
+always the precursor, and these two values now also directly feed the outcome
+classification described below.  **Aitken omega** is the self-tuning relaxation weight
+blended into the precursor state that iteration (see :doc:`code_s5`, "How the
+precursor↔shock loop actually converges"); it is not fixed, and for a model that is
+oscillating rather than converging it is often informative to watch whether omega itself
+settles down or keeps cycling.
 
 If convergence is not reached within the requested number of iterations, MAPPINGS does not
 stop there: each failed check extends the iteration cap by one and tries again, up to a hard
 ceiling of 20 global iterations (``mxshockits`` in ``const.inc``). Whether or not convergence
 was ever reached — even after using all 20 — the loop then runs a few more ordinary
 iterations followed by one further, final output pass. **There is no failure flag written to
-any output file, no non-zero exit code, and no crash** for a run that never converges; the
-only record is the "Result:" line on whichever "SHOCK 5 Convergence Test" block was last
-printed to the terminal. For a model whose main loop genuinely converges, that last line is
-now reliable — a spurious disagreement on the mandatory final independent re-solve no longer
-overrides an already-established result (it is reported as ``Result: CONVERGED`` with a note
-explaining why, rather than a bare, misleading ``NOT CONVERGED``). A run finishing cleanly is
-still not automatically the same thing as a run having converged, though — see
-:doc:`walkthrough_s5`, "Checking for convergence and other failures", for how to verify this
-in practice.
+any output file, no non-zero exit code, and no crash** for a run that never converges (with
+one exception — see "Known gap: unhandled crash paths" below); the only record is the
+"Result:" line on whichever "SHOCK 5 Convergence Test" block was last printed to the
+terminal. For a model whose main loop genuinely converges, that last line is now reliable —
+a spurious disagreement on the mandatory final independent re-solve no longer overrides an
+already-established result. For a model that never converges, the last line classifies *why*
+— see :doc:`code_s5`, :ref:`s5_convergence_outcomes`, for the full set of eight possible
+outcomes and what each means; the short version is that a model whose only problem is the
+characterised, bounded precursor oscillation reports ``NOT CONVERGED (precursor
+oscillating)`` and is safe to use as-is, while the other, uncharacterised failure shapes are
+reported distinctly and still warrant a look. A run finishing cleanly is still not
+automatically the same thing as a run having converged, though — see :doc:`walkthrough_s5`,
+"Checking for convergence and other failures", for how to verify this in practice.
+
+**Known gap: unhandled crash paths.**  The outcome classification above only covers models
+that run to completion.  Two guards elsewhere in the S5 chain (``cool.f``'s ``Cool out of
+range`` check, and ``rankhug.f``'s ``vel0 <= 0`` check) call Fortran ``stop`` directly on an
+unphysical state, terminating the whole program with no ``Result:`` line at all — a grid run
+just sees a missing or truncated output file, with no graceful record of why.  This is a
+pre-existing gap, not something the outcome classification above addresses; fixing it would
+mean threading a return/error status up through several call layers instead of a hard
+``stop``.
 
 **No-shock outcome**
 
@@ -530,7 +544,8 @@ making progress.
        precursor/post-shock RMS split, Aitken omega)
      - **No**
      - **Yes — stdout only**
-   * - CONVERGED / NOT CONVERGED / NO SHOCK result
+   * - Outcome classification (8 possible ``Result:`` lines, with RMS
+       values)
      - **No**
      - **Yes — stdout only**
    * - "No Shock:" summary (Alfvén Mach number)

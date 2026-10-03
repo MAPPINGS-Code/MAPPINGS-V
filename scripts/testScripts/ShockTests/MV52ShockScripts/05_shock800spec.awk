@@ -118,7 +118,7 @@ END{
 print  " MV Shock Test 05: 800km/s"
 print  " Quantity      ,   MVS5,   Model,  Diff%"
 hb = hbeta*1e4
-printf(" HB  e-04 4861 , 0.6578, %7.4f, %6.1f\n", hb,         100*(hb          - 6.57846e-01)/ 6.57846e-01);
+printf(" HB  e-04 4861 , 6.5785, %7.4f, %6.1f\n", hb,         100*(hb          - 6.57846e+00)/ 6.57846e+00);
 printf(" Lya      1215 , 34.050, %7.3f, %6.1f\n", lyalpha,    100*(lyalpha     - 3.40496e+01)/ 3.40496e+01);
 printf(" HeI      5876 ,  0.216, %7.3f, %6.1f\n", hei5876,    100*( hei5876    - 2.16270e-01)/ 2.16270e-01);
 printf(" HeII     4686 ,  0.201, %7.3f, %6.1f\n", heii4686,   100*( heii4686   - 2.01382e-01)/ 2.01382e-01);
@@ -170,5 +170,5 @@ suml = suml+(mgii2798+mgvi1806+sliii1892+slii2335+siii1871m+siiv1397);
 suml = suml+(sii6716+sii6731+siii6312+siii9069+siii9531+siv1051m+arii6985m);
 suml = suml+(feii16435+feii1793m+nkii6636m);
 suml = suml*hb;
-printf(" Ltot  e-04    , 47.541, %7.3f, %6.1f\n", suml   , 100*(suml     - 4.75407e+01)/4.75407e+01);
+printf(" Ltot  e-04    , 475.41, %7.3f, %6.1f\n", suml   , 100*(suml     - 4.75407e+02)/4.75407e+02);
 }

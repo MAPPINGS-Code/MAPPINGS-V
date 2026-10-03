@@ -34,6 +34,8 @@ c
       include 's5blocks.inc'
 c
       integer*4 iterations,iterationindex,nlock,wasconverged
+      integer*4 wasosclass
+      real*8 wasprecrms,waspostrms
    10 format(//,
      & ' *********************************************************',/,
      & '  SHOCK 5    Global Iteration: ',i2.2,' of ',i2.2)
@@ -88,22 +90,10 @@ c
 c
       iterationindex=0
       converged=0
+      osclass=0
+      precwarn=0
       finalit=0
       aitninit=0
-c
-c  Solve the precursor's own inner loop to the real outer tolerance
-c  (s5rmstol) from iteration 1, not just once convergence is first
-c  (loosely) declared (issue #7).  A survey across 9 models found a
-c  third had a large loose-vs-tight gap at the end -- the main loop's
-c  whole convergence history was being judged against an inner solve
-c  10x-1000x looser than the 0.01% outer threshold, not just the
-c  final pass.  Costs ~7-30% more wall-clock time (measured directly,
-c  same models, old vs new code) but is the honest fix: 8 of the 9
-c  surveyed models now converge cleanly (up from 6), and the ninth is
-c  correctly diagnosed as a genuine sustained oscillation rather than
-c  masked by a lucky loose-tolerance comparison.
-c
-      s5tight=1
 c
       if (iterations.le.1) finalit=1
 c
@@ -124,10 +114,10 @@ c
         if ((converged.eq.0).and.(iterations.lt.mxshockits)) goto 40
 c
 c  A few more ordinary iterations once convergence is first declared,
-c  cheap extra confirmation now that s5tight makes every iteration
-c  (not just this tail) solve the precursor to the real tolerance
-c  (issue #7).  Skipped if the loop above never converged; more of
-c  the same iteration wouldn't be expected to fix that on its own.
+c  cheap extra confirmation now that every iteration (not just this
+c  tail) solves the precursor to the real tolerance (issue #7).
+c  Skipped if the loop above never converged; more of the same
+c  iteration wouldn't be expected to fix that on its own.
 c
         if (converged.ne.0) then
           do nlock=1,3
@@ -143,8 +133,10 @@ c
 c repeat a final model for outputs
 c
         finalit=1
-        s5tight=1
         wasconverged=converged
+        wasosclass=osclass
+        wasprecrms=precrms
+        waspostrms=postrms
         iterationindex=iterationindex+1
 c
         call shock5precursor (iterationindex, iterationindex)
@@ -168,13 +160,45 @@ c  corrected.
 c
         if ((wasconverged.ne.0).and.(converged.eq.0)) then
           converged=1
-          write (*,38)
+          write (*,38) wasprecrms*100.d0,waspostrms*100.d0
+        else if ((wasconverged.eq.0).and.(converged.eq.0)) then
+          if (wasosclass.eq.1) write (*,39) wasprecrms*100.d0,
+     &      waspostrms*100.d0
+          if (wasosclass.eq.2) write (*,41) wasprecrms*100.d0,
+     &      waspostrms*100.d0
+          if (wasosclass.eq.3) write (*,42) wasprecrms*100.d0,
+     &      waspostrms*100.d0
+          if (wasosclass.eq.4) write (*,43) wasprecrms*100.d0,
+     &      waspostrms*100.d0
+          if (wasosclass.eq.5) write (*,44)
         endif
-   38   format('  Result: CONVERGED  (already converged before this ',
-     & 'final output pass;',/,
-     & '  the pass above re-solves independently and can show a ',
-     & 'small residual',/,
-     & '  from doing so -- see comment at issue #7)',/,
+   38   format('  Result: CONVERGED  (last independent recheck was ',
+     & 'noisy;',/,
+     & '  already converged earlier -- see comment at issue #7; ',
+     & 'precursor RMS ',1pg11.4,'%, post-shock RMS ',1pg11.4,'%)',/,
+     & ' *********************************************************',/)
+   39   format('  Result: NOT CONVERGED (precursor oscillating; ',
+     & 'precursor RMS ',1pg11.4,'%, post-shock RMS ',1pg11.4,'%)',/,
+     & '  Bounded precursor limit cycle, issue #14 -- post-shock and ',
+     & 'inner solve OK.',/,
+     & ' *********************************************************',/)
+   41   format('  Result: NOT CONVERGED (precursor not converged; ',
+     & 'precursor RMS ',1pg11.4,'%, post-shock RMS ',1pg11.4,'%)',/,
+     & '  Precursor residual exceeds the issue #14 validated bound; ',
+     & 'post-shock OK.',/,
+     & ' *********************************************************',/)
+   42   format('  Result: NOT CONVERGED (post-shock not converged, ',
+     & 'precursor OK; precursor RMS ',1pg11.4,'%, post-shock RMS ',
+     & 1pg11.4,'%)',/,
+     & ' *********************************************************',/)
+   43   format('  Result: NOT CONVERGED (precursor and post-shock ',
+     & 'not converged; precursor RMS ',1pg11.4,'%, post-shock RMS ',
+     & 1pg11.4,'%)',/,
+     & ' *********************************************************',/)
+   44   format('  Result: FAILED (precursor inner solve exhausted, ',
+     & 'unreliable)',/,
+     & '  Inner sweep hit its budget without self-consistency -- ',
+     & 'see issue #14.',/,
      & ' *********************************************************',/)
 c
       endif
@@ -2102,13 +2126,14 @@ c
       integer*4 its,maxits
 c
       real*8 delhhe,rmserr,term
-      real*8 t_psi,t_cmp,t_tpre,t_tpst,t_depre,precrms,postrms
+      real*8 t_psi,t_cmp,t_tpre,t_tpst,t_depre
 c
    10 format(/,
      & ' ********************************************************',/,
      & '  SHOCK 5  Convergence Test, It.: ',i2.2,' of ',i2.2)
    20 format(
-     & '  Result: CONVERGED',/,
+     & '  Result: CONVERGED  (precursor RMS ',1pg11.4,'%, post-shock ',
+     & 'RMS ',1pg11.4,'%)',/,
      & ' ********************************************************',/)
    30 format(
      & '  Result: NOT CONVERGED',/,
@@ -2127,6 +2152,7 @@ c
      & '    Aitken omega (precursor relaxation)     : ',1pg11.4,/,
      & ' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::')
       converged=0
+      osclass=0
 c
       if (its.gt.1) then
 c
@@ -2163,11 +2189,46 @@ c
      &   rmserr*100.d0,aitomega
         if (rmserr.lt.s5rmstol) then
           converged=1
-          write (*,20)
+          write (*,20) precrms*100.d0,postrms*100.d0
         else
           converged=0
           if (its.ge.maxits) maxits=maxits+1
           write (*,30)
+c
+c  ISSUE #14: osclass -- classify *why* the combined test failed,
+c  from the same three facts every time (see the meanings listed at
+c  osclass's declaration, s5blocks.inc).  precwarn takes priority:
+c  the precrms/postrms split below assumes the precursor's own inner
+c  self-consistency solve actually settled on this iteration, and
+c  isn't a meaningful reading if it didn't.  0.5% (osclass 1 vs 2) is
+c  a deliberately conservative margin above every instance actually
+c  measured so far (0.015%-0.13% precrms across the known
+c  oscillators): comparing predicted precursor spectra between the
+c  two states of a live oscillator at this residual size showed every
+c  diagnostic emission line agreeing to well under 0.5%, consistently
+c  smaller than the genuine line-flux change between adjacent
+c  converged grid points one velocity step apart -- see issue #14.
+c  postrms's own ceiling (0.05%, vs s5rmstol's tight 0.01%) is looser
+c  than the precursor one and not independently spectrum-validated --
+c  post-shock quantities (Compression, T_shock) are computed from the
+c  precursor's own boundary state, so a purely precursor-side
+c  oscillation shows up as a small correlated wobble here too (0.005%-
+c  0.022% seen across the 4 known oscillators, confirmed via direct
+c  comparison against s5rmstol alone misclassifying 2 of them as a
+c  post-shock problem).  0.05% is a provisional margin above that
+c  observed range, not a proven bound -- revisit if more instances
+c  push closer to it.
+          if (precwarn.ne.0) then
+            osclass=5
+          else if ((postrms.lt.5.0d-4).and.(precrms.lt.5.0d-3)) then
+            osclass=1
+          else if ((postrms.lt.5.0d-4).and.(precrms.ge.5.0d-3)) then
+            osclass=2
+          else if ((postrms.ge.5.0d-4).and.(precrms.lt.5.0d-3)) then
+            osclass=3
+          else
+            osclass=4
+          endif
         endif
       endif
 c
@@ -2263,21 +2324,14 @@ c
       ratemode='ALL'
       absf=0.04d0
 c
-      rmslimit=5.0d-2
-      if (iteration.gt.1) rmslimit=1.0d-1
-c
-c  s5tight (issue #7): iterate the precursor's own inner loop to the
+c  Iterate the precursor's own inner loop, on every iteration, to the
 c  *same* tolerance shock5check uses for the outer pass/fail decision
-c  (s5rmstol), not the looser rmslimit values above -- otherwise the
-c  inner loop can consider itself self-consistent while still landing
-c  outside the outer threshold relative to the previous global
-c  iteration.  Currently set true for every iteration (see top of
-c  shock5()), so the two lines above are superseded immediately;
-c  s5tight is deliberately kept separate from finalit, which must stay
-c  true for exactly one call since it also gates compsh5's file
-c  writes.
+c  (s5rmstol, 0.01%).  The inner loop used to stop at 5-10%, so the
+c  outer convergence history was being judged against a precursor
+c  solve 10x-1000x looser than the threshold it was compared to
+c  (issue #7).  Costs roughly 7-30% more run time.
 c
-      if (s5tight.gt.0) rmslimit=s5rmstol
+      rmslimit=s5rmstol
 c
       fi=1.0d0
       wdil=0.5d0
@@ -2468,6 +2522,7 @@ c
 c
       xhfinal=pop(1,1)
       itcount=0
+      precwarn=0
       t0lim=0
       nfs0=nfs
 c
@@ -2607,9 +2662,8 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
 c Adjust grid size for given absf as te and pops converge
 c and save for next interation starting point.  Kept keyed on finalit
-c (not s5tight, issue #7) -- the grid should stay free to adapt for
-c the entire normal run, including once s5tight has tightened the
-c inner tolerance; it should only freeze for the single, truly final
+c (issue #7) -- the grid should stay free to adapt for the entire
+c normal run; it should only freeze for the single, truly final
 c output-writing pass.
 c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -2705,8 +2759,8 @@ c
       if (iteration.lt.3) goto 100
 c
 c  Note: the final pass (finalit>0) used to exit here after a single,
-c  un-refined sweep, even though rmslimit is tightened to 5.0d-4 for
-c  this pass above.  That let the final output be written from a
+c  un-refined sweep, even though rmslimit is the full s5rmstol
+c  tolerance.  That let the final output be written from a
 c  precursor state that had not actually met its own tightened
 c  tolerance, which could make an already-converged model report
 c  NOT CONVERGED on this last check alone (issue #7).  Now it falls
@@ -2725,14 +2779,20 @@ c
 c  Flag the case where the precursor's own inner zone-stepping loop
 c  exhausted its sweep budget (mxpcits) without reaching its own
 c  self-consistency target (rmslimit) -- previously silent.  With
-c  s5tight now demanding 0.01% self-consistency instead of the old
-c  10%, it's plausible some models can't get there in mxpcits sweeps;
+c  the inner loop now demanding 0.01% self-consistency instead of the
+c  old 10%, it's plausible some models can't get there in mxpcits
+c  sweeps;
 c  that would look like outer coupling oscillation/slow-convergence
 c  without this, when it's actually the inner solve itself running out
 c  of budget (issue #7 follow-up).
 c
       if ((rmserr.gt.rmslimit).and.(itcount.ge.mxpcits)) then
         write (*,95) itcount,iteration,rmserr*100.d0,rmslimit*100.d0
+c  ISSUE #14: this iteration's inner self-consistency solve did not
+c  reach its own target -- shock5check classifies this osclass=5
+c  regardless of how bounded the outer precrms/postrms split looks,
+c  since that split assumes the inner solve actually settled.
+        precwarn=1
       endif
    95 format('  ... PRECURSOR WARNING: inner loop hit its sweep cap (',
      & i3,' sweeps) at global iteration ',i3,
