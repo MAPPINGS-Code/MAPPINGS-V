@@ -115,12 +115,6 @@ c
       integer*4 ie,jnorm,converged,useprecfile
       integer*4  count,step,np,finalit
       integer*4  aitninit
-c s5tight: precursor inner-loop tolerance/regrid control (issue #7),
-c set once convergence is first declared and held through the lock-in
-c iterations and the final pass.  Deliberately separate from finalit,
-c which controls compsh5's file writes and must stay true for exactly
-c one call.
-      integer*4  s5tight
 c osclass (issue #14): set by shock5check whenever the model fails
 c the ordinary combined convergence test, classifying *why* using the
 c same three facts every time -- precwarn, postrms, precrms.  Read by
@@ -147,7 +141,7 @@ c warning.  Checked by shock5check to set osclass=5.
       integer*4  precwarn
 c
       common /shock5I/ ie,jnorm,converged,
-     & count,step,np,finalit,useprecfile,aitninit,s5tight,
+     & count,step,np,finalit,useprecfile,aitninit,
      & osclass,precwarn
 c
       common /shock5L/ luop,lusp,lupt,lupc,
