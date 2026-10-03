@@ -41,7 +41,7 @@ The most substantial correctness work in the repository's history: the iterative
 - Added a clean, correctly-labeled result for shock speeds too low to produce a physical shock at all (previously this could hang or crash instead of just reporting "no shock").
 - Fixed a case where the final line of output could misreport a model as unconverged even when it had genuinely converged.
 
-Net effect for a user: shock model runs are now far more likely to converge, no longer hang or crash on certain physically-valid-but-difficult inputs, and the convergence result reported at the end of a run can now actually be trusted. Two known, unusual parameter combinations still don't converge and remain open (tracked in issue #7).
+Net effect for a user: shock model runs are now far more likely to converge, no longer hang or crash on certain physically-valid-but-difficult inputs, and the convergence result reported at the end of a run can now actually be trusted. Two known, unusual parameter combinations still didn't converge; these turned out to be a bounded precursor oscillation that does not affect the predicted spectrum, and are now reported as such (issue #14, see below).
 
 ## Ending-condition documentation expanded; a P6/P7 prompt bug found and tracked (September 14, 2026, issue #9)
 
