@@ -186,31 +186,6 @@ c      call cosmic (t, de, dh)
       call cosmic (dh)
       tgg=tgg+cosgain
 c
-c    ***MICROTURBULENT DISSPATION HEATING
-c
-c     q=0.0d0
-c     if (turbheatmode.gt.0) then
-c       g=1.66666666666667d0
-c       dens=frho(de,dh)
-c       pres=fpresse(t,de,dh)
-c       v=sqrt(g*pres/dens)*admach
-c       alpha_cool=0.d0
-c       if (turbheatmode.eq.1) then
-c         alpha_cool=1.d0/frectim2(de)
-c       endif
-c       if (turbheatmode.eq.2) then
-c         alpha_cool=1.d0/fcietim(dh)
-c       endif
-c       if (turbheatmode.eq.3) then
-c         cooltime=gammaEOSU*pres/tll
-c         alpha_cool=1.d0/cooltime
-c       endif
-c       if (turbheatmode.eq.4) then
-c         alpha_cool=1.d0/alphaturbfixed
-c       endif
-c       q=0.5d0*dens*v*v*alpha_cool
-c       tll=tll-q
-c     endif
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
 c    ***(SEPARATELY) EFFECTIVE LOSS AND GAIN  :  ELOSS,EGAIN

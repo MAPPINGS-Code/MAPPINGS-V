@@ -160,9 +160,9 @@ before changing any switch.  The available switches are:
    * - Power-law cooling
      - 0 (off)
      - 1 = on
-   * - Turbulent heating
-     - 0 (off)
-     - 1 = on
+   * - *(unused, formerly turbulent heating)*
+     - 0
+     - Ignored; the line is kept so older files still read correctly
    * - Radiation pressure
      - 0 (on)
      - 1 = off

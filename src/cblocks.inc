@@ -1581,7 +1581,7 @@ c
       real*8 rstromhb,rstromheb
       real*8 fren,tauen,colend,tend,diend,dtau0
       real*8 qhdnin,qhdnav,qhdhin,qhdhav,uhin,uhav,unin,unav
-      real*8 tm00,admach,alphaturbfixed
+      real*8 tm00
       real*8 ofac,xfac,pfac,afac,bfac,cfac,scalen
       real*8 vfac,efac,ffac
       real*8 tofac,txfac,tpfac,tafac,tbfac,tcfac,tscalen
@@ -1674,7 +1674,7 @@ c
       integer*4 expertmode,collmode,dielcmode,photonmode
       integer*4 chargemode,chargeheatmode,kappamode
       integer*4 alphacoolmode,hhecollmode,linecoolmode,radpressmode
-      integer*4 irmode,turbheatmode,freefreemode
+      integer*4 irmode,freefreemode
       integer*4 grainmode,pahmode,pahactive,graindestructmode
       integer*4 grainadjust
       real*8 photofraction
@@ -1817,7 +1817,7 @@ c
      &                ,collmode,dielcmode,radpressmode
      &                ,phionmode,recommode,drrecmode
      &                ,chargemode,chargeheatmode
-     &                ,freefreemode,turbheatmode
+     &                ,freefreemode
      &                ,alphacoolmode,hhecollmode,linecoolmode
      &                ,grainmode,irmode,pahmode,pahactive
      &                ,graindestructmode,grainadjust,kappamode
@@ -2200,7 +2200,7 @@ c
      &                ,volstromhb,volstromheb
      &                ,rstromhb,rstromheb
      &                ,fren,tauen,colend,tend,diend,dtau0
-     &                ,tm00,aef,admach,alphaturbfixed
+     &                ,tm00,aef
      &                ,qhdnin,qhdnav,qhdhin,qhdhav,uhin,uhav,unin,unav
      &                ,frlum,radout,radin
      &                ,ponk,tinner
